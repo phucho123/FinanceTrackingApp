@@ -21,6 +21,7 @@ import CloseIcon from "../../assets/svg/close.svg";
 import { GlobalContext } from "../../context/GlobalContext";
 import { apiBaseUrl } from "../../config";
 import { categoryList } from "../../constants";
+import DropDownPicker from "react-native-dropdown-picker";
 
 import axios from "axios";
 

@@ -1,7 +1,7 @@
 import { View, Text, StyleSheet, Modal, TouchableOpacity, TextInput } from "react-native";
 import { useState, useContext } from "react";
 import axios from "axios";
-import SelectDropdown from "react-native-select-dropdown";
+import SelectDropdown from "react-native-select-dropdown"
 
 import ArrowLeftIcon from "../../assets/svg/arrow-left.svg";
 import ArrowDownIcon from "../../assets/svg/arrow-down-2.svg";
