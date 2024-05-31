@@ -1,4 +1,4 @@
-import { IsNotEmpty, IsNumber, IsString } from 'class-validator';
+import { IsNotEmpty, IsNumber, IsOptional, IsString } from 'class-validator';
 
 export class CreateTransactionDto {
   @IsNotEmpty()
@@ -7,7 +7,11 @@ export class CreateTransactionDto {
 
   @IsNotEmpty()
   @IsString()
-  description: string;
+  title: string;
+
+  @IsOptional()
+  @IsString()
+  description?: string;
 
   @IsNotEmpty()
   @IsNumber()
@@ -16,4 +20,12 @@ export class CreateTransactionDto {
   @IsNotEmpty()
   @IsString()
   userId: string;
+
+  @IsOptional()
+  @IsString()
+  imageUrl?: string;
+
+  @IsNotEmpty()
+  @IsString()
+  type: 'Income' | 'Expense';
 }

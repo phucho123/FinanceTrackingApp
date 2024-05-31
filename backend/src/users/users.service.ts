@@ -11,17 +11,21 @@ export class UsersService {
   constructor(@InjectModel(User.name) private userModel: Model<User>) {}
 
   findAll() {
-    return this.userModel.find().populate(['transactions', 'budgets']);
+    return this.userModel.find();
   }
 
   async createNewUser(createUserDto: CreateUserDto) {
-    const createdUser = new this.userModel(createUserDto);
+    const hashedPassword = await encodePassword(createUserDto.password);
+    const createdUser = new this.userModel({
+      ...createUserDto,
+      password: hashedPassword,
+    });
     if (!createdUser) throw new HttpException('User Not Created...', 400);
-    return createdUser.save();
+    return await createdUser.save();
   }
 
   findById(id: string) {
-    return this.userModel.findById(id).populate(['transactions', 'budgets']);
+    return this.userModel.findById(id);
   }
 
   async findByEmail(email: string) {
@@ -48,7 +52,7 @@ export class UsersService {
     return this.userModel.findByIdAndUpdate(id, update, { new: true });
   }
 
-  async deleteById(id: string): Promise<User> {
+  async deleteById(id: string) {
     return await this.userModel.findByIdAndDelete(id);
   }
 }

@@ -21,8 +21,8 @@ import { apiBaseUrl } from "../config";
 
 import EyeIcon from "../assets/svg/eye-regular.svg";
 import SlashEyeIcon from "../assets/svg/eye-slash-regular.svg";
-import { primaryColor } from "../styles/global";
 import MainButton from "../components/button/MainButton";
+import LoadingModal from "../components/LoadingModal";
 import { GlobalContext } from "../context/GlobalContext";
 
 const widthScreen = Dimensions.get("window").width;
@@ -33,10 +33,9 @@ const RegisterScreen = ({ navigation }) => {
     const [name, setName] = useState("");
     const [email, setEmail] = useState("");
     const [password, setPassword] = useState("");
-    const [loading, setLoading] = useState(false);
     const [error, setError] = useState("");
 
-    const { setUser } = useContext(GlobalContext);
+    const { setUser, setLoading } = useContext(GlobalContext);
 
     const handleUser = async (userId) => {
         try {
@@ -56,10 +55,10 @@ const RegisterScreen = ({ navigation }) => {
     };
 
     const handleSignUp = async () => {
-        setLoading(true);
         setError("");
 
         try {
+            setLoading(true);
             const response = await axios.post(
                 `${apiBaseUrl}/auth/signup`,
                 {
@@ -77,7 +76,7 @@ const RegisterScreen = ({ navigation }) => {
             setLoading(false);
             if (response.status === 201) {
                 // 201 for created
-                Alert.alert("SignUp Successful");
+                // Alert.alert("SignUp Successful");
                 await handleUser(response.data.userId);
                 navigation.navigate("Main");
             } else {
@@ -166,7 +165,7 @@ const RegisterScreen = ({ navigation }) => {
                 >
                     Already have an account?{" "}
                     <Text
-                        onPress={() => navigation.navigate("LoginScreen")}
+                        onPress={() => navigation.navigate("Login")}
                         style={{ textDecorationLine: "underline", color: "#7F3DFF", fontFamily: "Inter-SemiBold" }}
                     >
                         Login

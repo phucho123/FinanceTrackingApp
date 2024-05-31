@@ -8,13 +8,22 @@ export class Transaction {
   categoryName: string;
 
   @Prop({ required: true })
-  description: string;
+  title: string;
+
+  @Prop({ required: false })
+  description?: string;
 
   @Prop({ required: true })
   money: number;
 
+  @Prop({ required: true })
+  type: string;
+
   @Prop({ required: false })
   imageUrl?: string;
+
+  @Prop({ required: true })
+  userId: string;
 }
 
 export const TransactionSchema = SchemaFactory.createForClass(Transaction);

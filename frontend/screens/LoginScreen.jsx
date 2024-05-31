@@ -8,6 +8,7 @@ import {
     View,
     StyleSheet,
     Alert,
+    Modal,
 } from "react-native";
 import { apiBaseUrl } from "../config";
 
@@ -18,6 +19,7 @@ import EyeIcon from "../assets/svg/eye-regular.svg";
 import SlashEyeIcon from "../assets/svg/eye-slash-regular.svg";
 import { primaryColor } from "../styles/global";
 import MainButton from "../components/button/MainButton";
+import LoadingModal from "../components/LoadingModal";
 
 import { GlobalContext } from "../context/GlobalContext";
 
@@ -27,10 +29,9 @@ const LoginScreen = ({ navigation }) => {
     const [visibleEntry, setVisibleEntry] = useState(false);
     const [email, setEmail] = useState("");
     const [password, setPassword] = useState("");
-    const [loading, setLoading] = useState(false);
     const [error, setError] = useState("");
 
-    const { setUser } = useContext(GlobalContext);
+    const { setUser, setLoading } = useContext(GlobalContext);
 
     const handleUser = async (userId) => {
         try {
@@ -50,6 +51,7 @@ const LoginScreen = ({ navigation }) => {
     };
 
     const handleSubmit = async () => {
+        setLoading(true);
         try {
             const response = await axios.post(
                 `${apiBaseUrl}/auth/login`,
@@ -64,11 +66,11 @@ const LoginScreen = ({ navigation }) => {
                 }
             );
 
-            setLoading(false);
             if (response.status === 201) {
                 // 201 for created
-                Alert.alert("Login Successful");
+                // Alert.alert("Login Successful");
                 await handleUser(response.data.userId);
+                setLoading(false);
                 navigation.navigate("Main");
             } else {
                 console.log("Error:", response.data.message);
@@ -138,7 +140,7 @@ const LoginScreen = ({ navigation }) => {
                     >
                         Don't have an account yet?{" "}
                         <Text
-                            onPress={() => navigation.navigate("RegisterScreen")}
+                            onPress={() => navigation.navigate("SignUp")}
                             style={{ textDecorationLine: "underline", color: "#7F3DFF", fontFamily: "Inter-SemiBold" }}
                         >
                             Sign Up
@@ -156,24 +158,6 @@ const styles = StyleSheet.create({
         paddingHorizontal: 25,
         backgroundColor: "#fff",
     },
-
-    // header
-    headerContainer: {
-        marginTop: 140,
-        flexDirection: "row",
-        justifyContent: "center",
-    },
-    backButton: {
-        width: 50,
-        height: 30,
-    },
-    headerTitle: {
-        fontFamily: "Inter-SemiBold",
-        color: "#000",
-        fontSize: 18,
-        marginTop: 140,
-    },
-
     // form
     formContainer: {
         marginTop: 90,

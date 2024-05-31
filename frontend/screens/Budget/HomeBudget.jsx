@@ -1,5 +1,16 @@
-import React, { useContext } from "react";
-import { View, Text, Platform, StatusBar, StyleSheet, TouchableOpacity, ScrollView, FlatList } from "react-native";
+import React, { useContext, useState, useEffect } from "react";
+import {
+    View,
+    Text,
+    Platform,
+    StatusBar,
+    StyleSheet,
+    TouchableOpacity,
+    ScrollView,
+    FlatList,
+    ActivityIndicator,
+    Modal,
+} from "react-native";
 
 import { primaryColor, globalStyles } from "../../styles/global";
 import ArrowLeftIcon from "../../assets/svg/arrow-left-2.svg";
@@ -10,19 +21,29 @@ import MainButton from "../../components/button/MainButton";
 import ProgressBar from "../../components/ProgressBar";
 
 import { GlobalContext } from "../../context/GlobalContext";
+import axios from "axios";
+import { apiBaseUrl } from "../../config";
+import LoadingModal from "../../components/LoadingModal";
+
+const Colors = {
+    Shopping: "#FCAC12",
+    Transportation: "#0077FF",
+    Food: "#FD3C4A",
+    Subscription: "#7F3DFF",
+    Travel: "#140c59",
+};
 
 function BudgetItem({ navigation, budget }) {
-    const { categoryName, maxMoney } = budget;
-    const spendMoney = -budget.spendMoney;
+    const { categoryName, maxMoney, spendMoney } = budget;
     const remainMoney = spendMoney < maxMoney ? maxMoney - spendMoney : 0;
     const percent = spendMoney < maxMoney ? Math.floor((spendMoney / maxMoney) * 100) : 100;
 
-    let color = "orange";
+    let color = Colors[categoryName] || primaryColor;
 
     return (
         <TouchableOpacity
             onPress={() => {
-                navigation.navigate("DetailBudget");
+                navigation.navigate("DetailBudget", { budgetId: budget._id });
             }}
         >
             <View
@@ -62,40 +83,66 @@ function BudgetItem({ navigation, budget }) {
 }
 
 function HomeBudget({ navigation }) {
-    const { user } = useContext(GlobalContext);
+    const [budgets, setBudgets] = useState();
+    const { user, setLoading, callBudgets } = useContext(GlobalContext);
+    const getBudgets = async () => {
+        try {
+            setLoading(true);
+            const response = await axios.get(`${apiBaseUrl}/budgets?userId=${user._id}`);
+            if (response.status === 200) {
+                setBudgets(response.data);
+                setLoading(false);
+            } else {
+                console.log("Error:", response.data.message);
+                setError(response.data.message || "Get Budgets failed");
+            }
+        } catch (error) {
+            console.log("Error details:", error.response ? error.response.data : error.message);
+            setLoading(false);
+            setError(error.response ? error.response.data.message : "An error occurred. Please try again.");
+        }
+    };
+
+    useEffect(() => {
+        getBudgets();
+    }, [callBudgets]);
 
     return (
         <View style={styles.container}>
-            <View style={styles.topBar}>
-                <ArrowLeftIcon width={32} height={32} fill="#fff" />
-                <Text style={styles.textBar}>May</Text>
-                <ArrowRightIcon width={32} height={32} fill="#fff" />
-            </View>
-            <View style={styles.listContainer}>
-                <View style={{ width: "100%", height: "85%" }}>
-                    {user.budgets.length > 0 ? (
-                        <FlatList
-                            data={user.budgets}
-                            renderItem={({ item }) => <BudgetItem navigation={navigation} budget={item} />}
-                            ItemSeparatorComponent={() => <View style={{ height: 15 }}></View>}
+            {budgets && (
+                <>
+                    <View style={styles.topBar}>
+                        <ArrowLeftIcon width={32} height={32} fill="#fff" />
+                        <Text style={styles.textBar}>May</Text>
+                        <ArrowRightIcon width={32} height={32} fill="#fff" />
+                    </View>
+                    <View style={styles.listContainer}>
+                        <View style={{ width: "100%", height: "85%" }}>
+                            {budgets.length > 0 ? (
+                                <FlatList
+                                    data={budgets}
+                                    renderItem={({ item }) => <BudgetItem navigation={navigation} budget={item} />}
+                                    ItemSeparatorComponent={() => <View style={{ height: 15 }}></View>}
+                                />
+                            ) : (
+                                <>
+                                    <Text style={styles.emptyText}>You don’t have a budget.</Text>
+                                    <Text style={styles.emptyText}>Let’s make one so you in control.</Text>
+                                </>
+                            )}
+                        </View>
+                        <MainButton
+                            pressHandler={() => {
+                                navigation.navigate("CreateBudget");
+                            }}
+                            buttonSize="large"
+                            buttonType="primary"
+                            textType="primaryText"
+                            title="Create a budget"
                         />
-                    ) : (
-                        <>
-                            <Text style={styles.emptyText}>You don’t have a budget.</Text>
-                            <Text style={styles.emptyText}>Let’s make one so you in control.</Text>
-                        </>
-                    )}
-                </View>
-                <MainButton
-                    pressHandler={() => {
-                        navigation.navigate("CreateBudget");
-                    }}
-                    buttonSize="large"
-                    buttonType="primary"
-                    textType="primaryText"
-                    title="Create a budget"
-                />
-            </View>
+                    </View>
+                </>
+            )}
         </View>
     );
 }

@@ -21,12 +21,16 @@ export class TransactionsController {
 
   @Post()
   createTransaction(@Body() createTransactionDto: CreateTransactionDto) {
+    const { type } = createTransactionDto;
+    if (type !== 'Income' && type !== 'Expense')
+      throw new HttpException('Transaction Type Not Valid', 400);
     return this.transactionsService.createNewTransaction(createTransactionDto);
   }
 
   @Get()
-  getAllTransaction(@Query() query: ExpressQuery) {
-    return this.transactionsService.getAllTransaction(query);
+  async getAllTransaction(@Query() query) {
+    console.log(query);
+    return await this.transactionsService.getAllTransaction(query);
   }
 
   @Get(':id')
@@ -38,19 +42,12 @@ export class TransactionsController {
     return transaction;
   }
 
-  @Delete(':userId/:transactionId')
-  async deleteTransaction(
-    @Param('userId') userId: string,
-    @Param('transactionId') transactionId: string,
-  ) {
-    const userIdIsValid = mongoose.Types.ObjectId.isValid(userId);
-    if (!userIdIsValid) throw new HttpException('userId Not Valid', 400);
-    const tranIdIsValid = mongoose.Types.ObjectId.isValid(transactionId);
-    if (!tranIdIsValid) throw new HttpException('transactionId Not Valid', 400);
-    const deletedTransaction = await this.transactionsService.deleteTransaction(
-      userId,
-      transactionId,
-    );
+  @Delete(':id')
+  async deleteTransaction(@Param('id') id: string) {
+    const tranIdIsValid = mongoose.Types.ObjectId.isValid(id);
+    if (!tranIdIsValid) throw new HttpException('Id Not Valid', 400);
+    const deletedTransaction =
+      await this.transactionsService.deleteTransaction(id);
     if (!deletedTransaction)
       throw new HttpException('Transaction Not Found', 404);
     return deletedTransaction;

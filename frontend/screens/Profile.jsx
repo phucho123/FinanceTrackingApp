@@ -1,8 +1,11 @@
 import React, { useContext, useState } from "react";
-import { View, Text, Image, Modal, StyleSheet, TouchableOpacity } from "react-native";
+import { View, Text, Image, Modal, StyleSheet, TouchableOpacity, FlatList } from "react-native";
 
 import EditIcon from "../assets/svg/edit.svg";
 import LogOutIcon from "../assets/svg/logout.svg";
+import WalletIcon from "../assets/svg/wallet-3.svg";
+import SettingsIcon from "../assets/svg/settings.svg";
+
 import MainButton from "../components/button/MainButton";
 import { GlobalContext } from "../context/GlobalContext";
 import { primaryColor } from "../styles/global";
@@ -12,8 +15,30 @@ export default function Profile({ navigation }) {
 
     const { user, setUser } = useContext(GlobalContext);
 
+    const itemList = [
+        {
+            title: "Account",
+            Icon: <WalletIcon width={32} height={32} fill="red" />,
+            color: "#EEE5FF",
+        },
+        {
+            title: "Settings",
+            Icon: <SettingsIcon width={32} height={32} fill="red" />,
+            color: "#EEE5FF",
+        },
+        {
+            title: "Logout",
+            Icon: <LogOutIcon width={32} height={32} fill="red" />,
+            color: "#FFE2E4",
+            onPress: () => {
+                setOpenModal(true);
+            },
+        },
+    ];
+
     return (
         <View style={styles.container}>
+            {/* Logout Modal */}
             <Modal
                 animationType="fade"
                 transparent={true}
@@ -103,19 +128,28 @@ export default function Profile({ navigation }) {
                     <EditIcon width={40} height={40} stroke="#000" />
                 </TouchableOpacity>
             </View>
-            <View style={{ padding: 16, backgroundColor: "#fff", marginTop: 32, borderRadius: 24 }}>
-                <TouchableOpacity
-                    onPress={() => {
-                        setOpenModal(true);
+
+            <View style={{ marginTop: 24, borderRadius: 16, overflow: "hidden" }}>
+                <FlatList
+                    data={itemList}
+                    ItemSeparatorComponent={() => {
+                        return <View style={{ height: 1, backgroundColor: "#F6F6F6" }}></View>;
                     }}
-                >
-                    <View style={{ flexDirection: "row", marginTop: 32, alignItems: "center" }}>
-                        <View style={{ backgroundColor: "#FFE2E4", padding: 10, borderRadius: 16 }}>
-                            <LogOutIcon width={32} height={32} fill="red" />
-                        </View>
-                        <Text style={{ fontSize: 16, fontWeight: "bold", marginLeft: 10 }}>Logout</Text>
-                    </View>
-                </TouchableOpacity>
+                    renderItem={({ item, index }) => {
+                        const { Icon, title, color, onPress } = item;
+
+                        return (
+                            <TouchableOpacity onPress={onPress}>
+                                <View style={styles.item}>
+                                    <View style={{ backgroundColor: color, padding: 10, borderRadius: 16 }}>
+                                        {Icon}
+                                    </View>
+                                    <Text style={{ fontSize: 16, fontWeight: "bold", marginLeft: 10 }}>{title}</Text>
+                                </View>
+                            </TouchableOpacity>
+                        );
+                    }}
+                />
             </View>
         </View>
     );
@@ -126,5 +160,12 @@ const styles = StyleSheet.create({
         flex: 1,
         padding: 16,
         backgroundColor: "#F6F6F6",
+    },
+    item: {
+        paddingVertical: 20,
+        paddingHorizontal: 16,
+        flexDirection: "row",
+        alignItems: "center",
+        backgroundColor: "#fff",
     },
 });

@@ -11,7 +11,6 @@ import {
     StyleSheet,
     Alert,
 } from "react-native";
-import DropDownPicker from "react-native-dropdown-picker";
 import { primaryColor, globalStyles } from "../../styles/global";
 import Slider from "@react-native-community/slider";
 import MainButton from "../../components/button/MainButton";
@@ -21,6 +20,7 @@ import CloseIcon from "../../assets/svg/close.svg";
 
 import { GlobalContext } from "../../context/GlobalContext";
 import { apiBaseUrl } from "../../config";
+import { categoryList } from "../../constants";
 
 import axios from "axios";
 
@@ -55,9 +55,10 @@ function CreateBudget({ navigation }) {
     const [alertPoint, setAlertPoint] = useState(0);
 
     const [open, setOpen] = useState(false);
-    const { user } = useContext(GlobalContext);
+    const { user, setLoading, setCallBudgets } = useContext(GlobalContext);
 
     const Item = (props) => {
+        console.log(props.item);
         return (
             <TouchableOpacity onPress={() => props.onPress(props)} activeOpacity={0.5}>
                 <View style={categoryName === props.item.value ? styles.selectedItemContainer : styles.itemContainer}>
@@ -71,18 +72,21 @@ function CreateBudget({ navigation }) {
 
     const handleCreate = async (body) => {
         try {
+            setLoading(true);
             const response = await axios.post(`${apiBaseUrl}/budgets`, body, {
                 headers: {
                     "Content-Type": "application/json",
                 },
             });
-
+            setLoading(false);
             if (response.status === 201) {
                 // 201 for created
-                Alert.alert("Create New Budget Successful");
+                // Alert.alert("Create New Budget Successful");
+                setCallBudgets((prev) => !prev);
+                navigation.navigate("DetailBudget", { budgetId: response.data._id });
             } else {
                 console.log("Error:", response.data.message);
-                setError(response.data.message || "Login failed");
+                setError(response.data.message || "Create New Budget failed");
             }
         } catch (error) {
             console.log("Error details:", error.response ? error.response.data : error.message);

@@ -22,15 +22,15 @@ export class User {
   })
   avatarUrl: string;
 
-  @Prop({
-    type: [{ type: mongoose.Schema.Types.ObjectId, ref: 'Transaction' }],
-  })
-  transactions: Transaction[];
+  // @Prop({
+  //   type: [{ type: mongoose.Schema.Types.ObjectId, ref: 'Transaction' }],
+  // })
+  // transactions: Transaction[];
 
-  @Prop({
-    type: [{ type: mongoose.Schema.Types.ObjectId, ref: 'Budget' }],
-  })
-  budgets: Budget[];
+  // @Prop({
+  //   type: [{ type: mongoose.Schema.Types.ObjectId, ref: 'Budget' }],
+  // })
+  // budgets: Budget[];
 }
 
 export const UserSchema = SchemaFactory.createForClass(User);

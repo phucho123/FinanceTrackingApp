@@ -6,7 +6,6 @@ import { Transaction } from 'src/schemas/Transaction.schema';
 import { CreateTransactionDto } from './dtos/CreateTransaction.dto';
 import { HttpException } from '@nestjs/common';
 import { UpdateTransactionDto } from './dtos/UpdateTransaction.dto';
-import { Query } from 'express-serve-static-core';
 
 @Injectable()
 export class TransactionsService {
@@ -15,51 +14,54 @@ export class TransactionsService {
     @InjectModel(Transaction.name) private transactionModel: Model<Transaction>,
   ) {}
 
-  async createNewTransaction({
-    userId,
-    ...createTransactionDto
-  }: CreateTransactionDto) {
-    const findUser = await this.userModel.findById(userId);
+  async createNewTransaction(createTransactionDto: CreateTransactionDto) {
+    const findUser = await this.userModel.findById(createTransactionDto.userId);
     if (!findUser) throw new HttpException('User Not Found', 404);
     const newTransaction = new this.transactionModel(createTransactionDto);
-    const savedTransaction = await newTransaction.save();
-    await findUser.updateOne({
-      $push: { transactions: savedTransaction._id },
-    });
-    return savedTransaction;
+    return await newTransaction.save();
   }
 
-  getAllTransaction(query: Query) {
-    const resPerPage = 3;
-    const currentPage = Number(query.page) || 1;
-    const skip = resPerPage * (currentPage - 1);
+  async getAllTransaction(query) {
+    const { sortMoney, sortTime, ...whereObj } = query;
+    const sortObj = sortMoney
+      ? sortTime
+        ? { money: sortMoney, createdAt: sortTime }
+        : { money: sortMoney }
+      : sortTime
+        ? { createdAt: sortTime }
+        : {};
 
-    const categoryName = query.categoryName
-      ? {
-          categoryName: {
-            $regex: query.categoryName,
-            $options: 'i',
-          },
-        }
-      : {};
-    return this.transactionModel
-      .find({ ...categoryName })
-      .limit(resPerPage)
-      .skip(skip);
+    // const resPerPage = 3;
+    // const currentPage = Number(query.page) || 1;
+    // const skip = resPerPage * (currentPage - 1);
+
+    // const categoryName = query.categoryName
+    //   ? {
+    //       categoryName: {
+    //         $regex: query.categoryName,
+    //         $options: 'i',
+    //       },
+    //     }
+    //   : {};
+    // return this.transactionModel
+    //   .find({ ...categoryName })
+    //   .limit(resPerPage)
+    //   .skip(skip);
+
+    return await this.transactionModel.find(whereObj).sort(sortObj);
   }
 
   getTransactionById(id: string) {
     return this.transactionModel.findById(id);
   }
 
-  async deleteTransaction(userId: string, transactionId: string) {
-    const findUser = await this.userModel.findById(userId);
-    if (!findUser) throw new HttpException('User Not Found', 404);
+  async getTransactionsByUserId(userId: string) {
+    return await this.transactionModel.find({ userId });
+  }
+
+  async deleteTransaction(transactionId: string) {
     const deletedTransaction =
       await this.transactionModel.findByIdAndDelete(transactionId);
-    await findUser.updateOne({
-      $pull: { transactions: deletedTransaction._id },
-    });
     return deletedTransaction;
   }
 

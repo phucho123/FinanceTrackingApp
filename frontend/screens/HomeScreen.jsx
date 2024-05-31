@@ -1,4 +1,4 @@
-import React, { Component, useState, useContext } from "react";
+import React, { Component, useState, useContext, useEffect } from "react";
 import {
     StyleSheet,
     View,
@@ -12,12 +12,9 @@ import {
     Modal,
     FlatList,
     ScrollView,
+    ActivityIndicator,
 } from "react-native";
 
-import avatarImage from "../assets/images/avatar.jpg";
-import chartImage from "../assets/images/chart.png";
-
-import ShoppingBagIcon from "../assets/svg/shopping-bag.svg";
 import ArrowDownIcon from "../assets/svg/arrow-down-2.svg";
 import NotificationIcon from "../assets/svg/notification.svg";
 import IncomeIcon from "../assets/svg/income.svg";
@@ -29,14 +26,15 @@ import CarIcon from "../assets/svg/car.svg";
 import SalaryIcon from "../assets/svg/salary.svg";
 import PlaneIcon from "../assets/svg/plane-solid.svg";
 
+import TransactionItem from "../components/TransactionItem";
+import LoadingModal from "../components/LoadingModal";
 import { primaryColor } from "../styles/global";
+import { GlobalContext } from "../context/GlobalContext";
+import axios from "axios";
+import { apiBaseUrl } from "../config";
 
 var { height } = Dimensions.get("window");
 var box_count = 2;
-var box_height = height / box_count;
-const widthScreen = Dimensions.get("window").width;
-
-import { GlobalContext } from "../context/GlobalContext";
 
 const monthList = [
     { name: "January", value: 1 },
@@ -91,6 +89,31 @@ export default function HomeScreen({ navigation }) {
     const [modalVisible, setModalVisible] = useState(false);
     const [selectedTime, setSelectedTime] = useState(timeList[0]);
 
+    const { user, setLoading, callTransactions, setCallTransactions } = useContext(GlobalContext);
+    const [transactions, setTransactions] = useState();
+
+    const getTransactions = async () => {
+        try {
+            setLoading(true);
+            const response = await axios.get(`${apiBaseUrl}/transactions?userId=${user._id}`);
+            if (response.status === 200) {
+                setTransactions(response.data);
+                setLoading(false);
+            } else {
+                console.log("Error:", response.data.message);
+                setError(response.data.message || "Get Transactions failed");
+            }
+        } catch (error) {
+            console.log("Error details:", error.response ? error.response.data : error.message);
+            setLoading(false);
+            setError(error.response ? error.response.data.message : "An error occurred. Please try again.");
+        }
+    };
+
+    useEffect(() => {
+        getTransactions();
+    }, [callTransactions]);
+
     const handlePress = () => {
         const toValue2 = isExpanded ? -45 : 45;
 
@@ -102,107 +125,9 @@ export default function HomeScreen({ navigation }) {
         setIsExpanded(!isExpanded);
     };
 
-    const formatTime = (time) => {
-        const date = new Date(time);
-        return date.toLocaleString([], {
-            hour: "2-digit",
-            minute: "2-digit",
-        });
-    };
-
-    const renderTransactionItem = (transaction) => {
-        const money = transaction.money;
-
-        const renderIcon = (categoryName) => {
-            switch (categoryName) {
-                case "Shopping":
-                    return (
-                        <View style={{ padding: 10, borderRadius: 16, backgroundColor: "#FCEED4" }}>
-                            <ShoppingBagIcon width={40} height={40} fill="orange" />
-                        </View>
-                    );
-                case "Subscription":
-                    return (
-                        <View style={{ padding: 10, borderRadius: 16, backgroundColor: "#EEE5FF" }}>
-                            <RecurringBillIcon width={40} height={40} fill="#7F3DFF" />
-                        </View>
-                    );
-                case "Food":
-                    return (
-                        <View style={{ padding: 10, borderRadius: 16, backgroundColor: "#FDD5D7" }}>
-                            <RestaurantIcon width={40} height={40} fill="#FD3C4A" />
-                        </View>
-                    );
-                case "Salary":
-                    return (
-                        <View style={{ padding: 10, borderRadius: 16, backgroundColor: "#CFFAEA" }}>
-                            <SalaryIcon width={40} height={40} />
-                        </View>
-                    );
-                case "Transportation":
-                    return (
-                        <View style={{ padding: 10, borderRadius: 16, backgroundColor: "#BDDCFF" }}>
-                            <CarIcon width={40} height={40} fill="#0077FF" />
-                        </View>
-                    );
-
-                case "Travel":
-                    return (
-                        <View style={{ padding: 10, borderRadius: 16, backgroundColor: "#85caed" }}>
-                            <PlaneIcon width={40} height={40} fill="#0077FF" />
-                        </View>
-                    );
-                default:
-                    return (
-                        <View style={{ padding: 10, borderRadius: 16, backgroundColor: "#ccc" }}>
-                            <Text>{categoryName}</Text>
-                        </View>
-                    );
-            }
-        };
-
-        return (
-            <TouchableOpacity
-                style={{
-                    flexDirection: "row",
-                    justifyContent: "space-between",
-                    backgroundColor: "#FCFCFC",
-                    padding: 16,
-                    borderRadius: 24,
-                    marginBottom: 10,
-                }}
-            >
-                <View style={{ flexDirection: "row" }}>
-                    {renderIcon(transaction.categoryName)}
-                    <View style={{ marginLeft: 10, justifyContent: "space-between" }}>
-                        <Text style={{ fontSize: 16, fontFamily: "Inter-Medium" }}>{transaction.categoryName}</Text>
-                        <Text style={{ fontSize: 13, fontFamily: "Inter-Medium", color: "#91919F" }}>
-                            {transaction.description}
-                        </Text>
-                    </View>
-                </View>
-                <View style={{ justifyContent: "space-between" }}>
-                    {money < 0 ? (
-                        <Text
-                            style={{ fontSize: 16, fontFamily: "Inter-SemiBold", color: "#FD3C4A", textAlign: "right" }}
-                        >{`- ${-money}`}</Text>
-                    ) : (
-                        <Text
-                            style={{ fontSize: 16, fontFamily: "Inter-SemiBold", color: "#00A86B", textAlign: "right" }}
-                        >{`+ ${money}`}</Text>
-                    )}
-                    <Text style={{ fontSize: 13, fontFamily: "Inter-Medium", color: "#91919F" }}>
-                        {formatTime(transaction.createdAt)}
-                    </Text>
-                </View>
-            </TouchableOpacity>
-        );
-    };
-
-    const { user } = useContext(GlobalContext);
-
     return (
         <View style={styles.container}>
+            {/* Month Modal */}
             <Modal animationType="fade" transparent={true} visible={modalVisible}>
                 <View
                     style={{
@@ -238,150 +163,165 @@ export default function HomeScreen({ navigation }) {
                     </View>
                 </View>
             </Modal>
-            <View style={[styles.box1]}>
-                <View style={{ flexDirection: "row", alignItems: "center", justifyContent: "space-between" }}>
-                    <View
-                        style={{
-                            padding: 3,
-                            backgroundColor: "#fff",
-                            borderRadius: 100,
-                            borderWidth: 1,
-                            borderColor: primaryColor,
-                        }}
-                    >
-                        <Image source={{ uri: user.avatarUrl }} style={styles.avatar} />
-                    </View>
-                    <TouchableOpacity
-                        style={{
-                            paddingVertical: 5,
-                            paddingHorizontal: 10,
-                            borderRadius: 16,
-                            flexDirection: "row",
-                            alignItems: "center",
-                            borderWidth: 1,
-                            borderColor: "#F1F1FA",
-                        }}
-                        onPress={() => setModalVisible((prev) => !prev)}
-                    >
-                        <ArrowDownIcon fill={primaryColor} />
-                        <Text style={{ fontSize: 14, fontFamily: "Inter-Medium", marginLeft: 2 }}>{selectedValue}</Text>
-                    </TouchableOpacity>
-                    <NotificationIcon fill={primaryColor} />
-                </View>
-                <Text style={styles.text}>{user.name}</Text>
-                <Text style={styles.text1}>$5500</Text>
-                <View
-                    style={{
-                        flexDirection: "row",
-                        alignItems: "center",
-                        justifyContent: "space-around",
-                        marginTop: 30,
-                    }}
-                >
-                    <InOutCart
-                        title="Income"
-                        color="#00A86B"
-                        iconComponent={<IncomeIcon fill="#00A86B" />}
-                        money={5000}
-                    />
-                    <InOutCart
-                        title="Expenses"
-                        color="#FD3C4A"
-                        iconComponent={<ExpenseIcon fill="#FD3C4A" />}
-                        money={1200}
-                    />
-                </View>
-            </View>
-            <View style={[styles.box2]}>
-                <Text
-                    style={{
-                        marginTop: 10,
-                        marginLeft: 20,
-                        fontFamily: "Inter-SemiBold",
-                        color: "#0D0E0F",
-                        fontSize: 18,
-                    }}
-                >
-                    Spend Frequency
-                </Text>
-                {/* <Image source={chartImage} style={{ width: "100%", height: 170, marginTop: 20 }} /> */}
-                <View
-                    style={{
-                        flexDirection: "row",
-                        justifyContent: "space-around",
-                        fontFamily: "Inter-Medium",
-                        marginTop: 10,
-                        borderWidth: 1,
-                        borderColor: "#FCFCFC",
-                        marginHorizontal: 16,
-                    }}
-                >
-                    {timeList.map((time, index) => {
-                        return (
-                            <TouchableOpacity
-                                onPress={() => setSelectedTime(time)}
-                                key={index}
-                                style={
-                                    selectedTime === time
-                                        ? [styles.timeContainer, styles.selectedTimeContainer]
-                                        : styles.timeContainer
-                                }
+
+            {transactions && (
+                <>
+                    <View style={[styles.box1]}>
+                        <View style={{ flexDirection: "row", alignItems: "center", justifyContent: "space-between" }}>
+                            <View
+                                style={{
+                                    padding: 3,
+                                    backgroundColor: "#fff",
+                                    borderRadius: 100,
+                                    borderWidth: 1,
+                                    borderColor: primaryColor,
+                                }}
                             >
-                                <Text
-                                    style={
-                                        selectedTime === time
-                                            ? [styles.timeText, styles.selectedTimeText]
-                                            : styles.timeText
-                                    }
-                                >
-                                    {time}
+                                <Image source={{ uri: user.avatarUrl }} style={styles.avatar} />
+                            </View>
+                            <TouchableOpacity
+                                style={{
+                                    paddingVertical: 5,
+                                    paddingHorizontal: 10,
+                                    borderRadius: 16,
+                                    flexDirection: "row",
+                                    alignItems: "center",
+                                    borderWidth: 1,
+                                    borderColor: "#ccc",
+                                }}
+                                onPress={() => setModalVisible((prev) => !prev)}
+                            >
+                                <ArrowDownIcon fill={primaryColor} />
+                                <Text style={{ fontSize: 14, fontFamily: "Inter-Medium", marginLeft: 2 }}>
+                                    {selectedValue}
                                 </Text>
                             </TouchableOpacity>
-                        );
-                    })}
-                </View>
-                <View style={{ marginHorizontal: 16 }}>
-                    <View
-                        style={{
-                            flexDirection: "row",
-                            justifyContent: "space-between",
-                            alignItems: "center",
-                            marginVertical: 20,
-                        }}
-                    >
+                            <NotificationIcon fill={primaryColor} />
+                        </View>
+                        <Text style={styles.text}>Account Balance</Text>
+                        <Text style={styles.text1}>$5500</Text>
+                        <View
+                            style={{
+                                flexDirection: "row",
+                                alignItems: "center",
+                                justifyContent: "space-around",
+                                marginTop: 30,
+                            }}
+                        >
+                            <InOutCart
+                                title="Income"
+                                color="#00A86B"
+                                iconComponent={<IncomeIcon fill="#00A86B" />}
+                                money={5000}
+                            />
+                            <InOutCart
+                                title="Expenses"
+                                color="#FD3C4A"
+                                iconComponent={<ExpenseIcon fill="#FD3C4A" />}
+                                money={1200}
+                            />
+                        </View>
+                    </View>
+                    <View style={[styles.box2]}>
                         <Text
                             style={{
-                                fontSize: 18,
-                                color: "#292B2D",
+                                marginTop: 10,
+                                marginLeft: 20,
                                 fontFamily: "Inter-SemiBold",
+                                color: "#0D0E0F",
+                                fontSize: 18,
                             }}
                         >
-                            Recent Transaction
+                            Spend Frequency
                         </Text>
-                        <TouchableOpacity
+                        {/* <Image source={chartImage} style={{ width: "100%", height: 170, marginTop: 20 }} /> */}
+                        <View
                             style={{
-                                paddingVertical: 5,
-                                paddingHorizontal: 15,
-                                borderRadius: 32,
-                                backgroundColor: "#EEE5FF",
+                                flexDirection: "row",
+                                justifyContent: "space-around",
+                                fontFamily: "Inter-Medium",
+                                marginTop: 10,
+                                borderWidth: 1,
+                                borderColor: "#FCFCFC",
+                                marginHorizontal: 16,
                             }}
                         >
-                            <Text style={{ fontSize: 14, fontFamily: "Inter-Medium", color: primaryColor }}>
-                                See All
-                            </Text>
-                        </TouchableOpacity>
-                    </View>
-                </View>
+                            {timeList.map((time, index) => {
+                                return (
+                                    <TouchableOpacity
+                                        onPress={() => setSelectedTime(time)}
+                                        key={index}
+                                        style={
+                                            selectedTime === time
+                                                ? [styles.timeContainer, styles.selectedTimeContainer]
+                                                : styles.timeContainer
+                                        }
+                                    >
+                                        <Text
+                                            style={
+                                                selectedTime === time
+                                                    ? [styles.timeText, styles.selectedTimeText]
+                                                    : styles.timeText
+                                            }
+                                        >
+                                            {time}
+                                        </Text>
+                                    </TouchableOpacity>
+                                );
+                            })}
+                        </View>
+                        <View style={{ marginHorizontal: 16 }}>
+                            <View
+                                style={{
+                                    flexDirection: "row",
+                                    justifyContent: "space-between",
+                                    alignItems: "center",
+                                    marginVertical: 20,
+                                }}
+                            >
+                                <Text
+                                    style={{
+                                        fontSize: 18,
+                                        color: "#292B2D",
+                                        fontFamily: "Inter-SemiBold",
+                                    }}
+                                >
+                                    Recent Transaction
+                                </Text>
+                                <TouchableOpacity
+                                    style={{
+                                        paddingVertical: 5,
+                                        paddingHorizontal: 15,
+                                        borderRadius: 32,
+                                        backgroundColor: "#EEE5FF",
+                                    }}
+                                    onPress={() => navigation.navigate("HomeTransaction")}
+                                >
+                                    <Text style={{ fontSize: 14, fontFamily: "Inter-Medium", color: primaryColor }}>
+                                        See All
+                                    </Text>
+                                </TouchableOpacity>
+                            </View>
+                        </View>
 
-                <ScrollView style={{ marginHorizontal: 16, marginBottom: 50 }}>
-                    {user.transactions.map((transaction) => {
-                        return renderTransactionItem(transaction);
-                    })}
-                </ScrollView>
-            </View>
+                        <ScrollView style={{ marginHorizontal: 16, marginBottom: 50 }}>
+                            {transactions.map((transaction) => {
+                                return (
+                                    <TransactionItem
+                                        prevScreen="Home"
+                                        transaction={transaction}
+                                        navigation={navigation}
+                                    />
+                                );
+                            })}
+                        </ScrollView>
+                    </View>
+                </>
+            )}
         </View>
     );
 }
+
 const styles = StyleSheet.create({
     container: {
         flex: 1,

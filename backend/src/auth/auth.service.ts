@@ -14,11 +14,7 @@ export class AuthService {
   ) {}
 
   async signUp(createUserDto: CreateUserDto) {
-    const hashedPassword = await encodePassword(createUserDto.password);
-    const newUser = await this.usersService.createNewUser({
-      ...createUserDto,
-      password: hashedPassword,
-    });
+    const newUser = await this.usersService.createNewUser(createUserDto);
     const token = this.jwtService.sign({ id: newUser._id });
     return {
       userId: newUser._id,

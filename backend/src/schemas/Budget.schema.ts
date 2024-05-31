@@ -19,6 +19,9 @@ export class Budget {
 
   @Prop({ required: false, default: Date.now() })
   createdAt: Date;
+
+  @Prop({ required: true })
+  userId: string;
 }
 
 export const BudgetSchema = SchemaFactory.createForClass(Budget);

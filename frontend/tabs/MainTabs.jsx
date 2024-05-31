@@ -5,7 +5,7 @@ import { createBottomTabNavigator } from "@react-navigation/bottom-tabs";
 import Home from "../screens/HomeScreen";
 import Transaction from "../screens/Transaction";
 import Profile from "../screens/Profile";
-import Camera from "../screens/Camera";
+import AddTransaction from "../screens/Transaction/AddTransaction";
 
 import HomeIcon from "../assets/svg/home.svg";
 import TransactionIcon from "../assets/svg/transaction.svg";
@@ -14,6 +14,7 @@ import ProfileIcon from "../assets/svg/user.svg";
 import LargeAddIcon from "../assets/svg/large-add.svg";
 
 import HomeBudget from "../screens/Budget/HomeBudget";
+import HomeTransaction from "../screens/Transaction/HomeTransaction";
 
 import { primaryColor } from "../styles/global";
 
@@ -30,7 +31,8 @@ const screenOptions = {
         elevation: 0,
         height: 60,
         background: "#FCFCFC",
-        borderTopWidth: 0,
+        borderTopWidth: 1,
+        borderColor: "#c6c6c6",
     },
 };
 
@@ -60,8 +62,8 @@ export default function MainTabs() {
                 }}
             />
             <Tab.Screen
-                name="Transaction"
-                component={Transaction}
+                name="HomeTransaction"
+                component={HomeTransaction}
                 options={{
                     tabBarIcon: ({ focused }) => {
                         return (
@@ -82,8 +84,8 @@ export default function MainTabs() {
                 }}
             />
             <Tab.Screen
-                name="Camera"
-                component={Camera}
+                name="AddTransaction"
+                component={AddTransaction}
                 options={{
                     tabBarIcon: ({ focused }) => {
                         return (
@@ -100,6 +102,9 @@ export default function MainTabs() {
                                 <LargeAddIcon />
                             </View>
                         );
+                    },
+                    tabBarStyle: {
+                        display: "none",
                     },
                 }}
             />

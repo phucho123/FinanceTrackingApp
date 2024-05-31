@@ -1,5 +1,3 @@
-/* eslint-disable prettier/prettier */
-
 import { Module } from '@nestjs/common';
 import { AppController } from './app.controller';
 import { AppService } from './app.service';
@@ -34,6 +32,6 @@ import { BudgetsModule } from './budgets/budgets.module';
 })
 export class AppModule {
   constructor(private configService: ConfigService) {
-    console.log('Database URI:', this.configService.get('DB_URI'));
+    console.log('Connect to Database successfully');
   }
 }
